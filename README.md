@@ -2,7 +2,7 @@
 
 ## Description
 
-Thinker Server is a backend service built with NestJS that manages An App that helps people organize & generate their thoughts, ideas & learnings. The service handles pass creation, management, and distribution while integrating with Salesforce for data persistence.
+Thinker Server is a backend service built with NestJS that manages An App that helps people organize & generate their thoughts, ideas & learnings. The service handles note cards creation, management, and distribution.
 
 ## Prerequisites
 
