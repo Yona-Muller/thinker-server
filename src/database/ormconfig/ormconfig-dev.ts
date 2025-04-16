@@ -14,8 +14,8 @@ export default new DataSource({
   migrations: ['src/database/migration/*.{js,ts}'],
   synchronize: false,
   migrationsRun: false,
-  // ssl: {
-  //   ca: fs.readFileSync(path.join(process.cwd(), 'certs/us-east-1-bundle.pem')),
-  //   rejectUnauthorized: true,
-  // },
+  ssl: {
+    ca: fs.readFileSync(path.join(process.cwd(), 'certs/us-east-2-bundle.pem')),
+    rejectUnauthorized: true,
+  },
 });

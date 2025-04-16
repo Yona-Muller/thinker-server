@@ -4,6 +4,7 @@
 /build
 /venv
 /env
+/certs
 
 # Logs
 logs
