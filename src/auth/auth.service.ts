@@ -1,9 +1,9 @@
-import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, UnauthorizedException } from '@nestjs/common';
 import { UserService } from 'src/users/user.service';
 import { GoogleOauthQueryDto, LoginByOTPDto, LoginByPasswordDto } from './dto/login.dto';
 import { Response, Request } from 'express';
 import { ResponseUserDto } from 'src/users/dto/response-user.dro';
-import { TokenService } from './token.service';
+import { TokenService, TokenFields } from './token.service';
 import { MailService } from 'src/utils/mail/mail.service';
 import { OTP_EXPIRATION_TIME } from './constants';
 import { User } from 'src/users/entities/user.entity';
@@ -28,12 +28,12 @@ export class AuthService {
       user = await this.authenticateUserByOTP(loginDto);
     }
 
-    const shortToken = await this.tokenService.createTokenByUser(user);
-    this.tokenService.setShortTokenOnResponse(shortToken, res);
+    const shortToken = await this.tokenService.createTokenByUser(user, TokenFields.SHORT);
+    this.tokenService.setTokenOnResponse(shortToken, res, TokenFields.SHORT);
 
     if (loginDto.rememberMe) {
-      const longToken = await this.tokenService.createTokenByUser(user);
-      this.tokenService.setLongTokenOnResponse(longToken, res);
+      const longToken = await this.tokenService.createTokenByUser(user, TokenFields.LONG);
+      this.tokenService.setTokenOnResponse(longToken, res, TokenFields.LONG);
     }
 
     return res.status(200).json({ user: new ResponseUserDto(user) });
@@ -46,8 +46,8 @@ export class AuthService {
 
   async loginByGoogleOauthCode(googleOauthQueryDto: GoogleOauthQueryDto, res: Response) {
     const user = await this.authenticateUserByGoogleOauthCode(googleOauthQueryDto);
-    const token = await this.tokenService.createTokenByUser(user);
-    this.tokenService.setShortTokenOnResponse(token, res);
+    const token = await this.tokenService.createTokenByUser(user, TokenFields.SHORT);
+    this.tokenService.setTokenOnResponse(token, res, TokenFields.SHORT);
 
     const decodedState = decodeURIComponent(googleOauthQueryDto.state);
 
@@ -64,10 +64,10 @@ export class AuthService {
   async authenticateUserByPassword(loginDto: LoginByPasswordDto) {
     const user = await this.userService.findOneByField({ email: loginDto.email });
     if (!user) {
-      throw new UnauthorizedException(`User with email { ${loginDto.email} } not found`);
+      throw new BadRequestException(`User with email { ${loginDto.email} } not found`);
     }
     if (!(await user.comparePassword(loginDto.password))) {
-      throw new UnauthorizedException(`Incorrect password`);
+      throw new BadRequestException(`Incorrect password`);
     }
 
     return user;
@@ -147,7 +147,7 @@ export class AuthService {
     try {
       userId = await this.tokenService.getUserIdFromToken(req);
     } catch (error) {
-      userId = await this.tokenService.getUserIdFromToken(req, 'x-token');
+      userId = await this.tokenService.getUserIdFromToken(req, TokenFields.SHORT);
     }
     const user = await this.userService.findOne(userId);
     return { user };

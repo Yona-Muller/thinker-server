@@ -1,8 +1,7 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { JwtService } from '@nestjs/jwt';
-import { Request, Response } from 'express';
-import { TokenService } from './token.service';
+import { Response } from 'express';
+import { TokenService, TokenFields } from './token.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -19,16 +18,16 @@ export class AuthGuard implements CanActivate {
     const response = context.switchToHttp().getResponse<Response>();
 
     try {
-      this.tokenService.extractTokenFromCookies(request, 'x-long-token');
+      const token = this.tokenService.extractTokenFromCookies(request, TokenFields.LONG);
+      await this.tokenService.verifyToken(token);
     } catch (error) {
-      const token = this.tokenService.extractTokenFromCookies(request, 'x-token');
+      const token = this.tokenService.extractTokenFromCookies(request, TokenFields.SHORT);
       const tokenObject = await this.tokenService.verifyToken(token);
-      request['tokenObject'] = tokenObject;
+      // request['tokenObject'] = tokenObject;
       if (this.tokenService.isTokenExpiringSoon(tokenObject)) {
         this.tokenService.refreshToken(tokenObject, response);
       }
     }
-
     return true;
   }
 }

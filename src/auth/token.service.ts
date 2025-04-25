@@ -6,36 +6,36 @@ import { TOKEN_EXPIRATION_TIME, LONG_TOKEN_EXPIRATION_TIME, TOKEN_REFRESH_TIME }
 import type { TokenObject, UserForToken } from './dto/token.dto';
 import * as jwt from 'jsonwebtoken';
 
-type tokenFields = 'x-token' | 'x-long-token';
+export enum TokenFields {
+  SHORT = 'x-token',
+  LONG = 'x-long-token',
+}
 
 @Injectable()
 export class TokenService {
   constructor(private readonly jwtService: JwtService) {}
 
-  async createTokenByUser(user: User) {
-    const payload = {
+  async createTokenByUser(user: User, tokenField: TokenFields) {
+    const payload: any = {
       sub: user.id,
       role: user.role,
     };
-    const token = await this.jwtService.signAsync(payload);
+
+    if (user.businesses && user.businesses.length > 0) {
+      payload.businessId = user.businesses[0].id;
+    } else payload.businessId = null;
+
+    const token = await this.jwtService.signAsync(payload, { expiresIn: tokenField === TokenFields.SHORT ? TOKEN_EXPIRATION_TIME + '' : LONG_TOKEN_EXPIRATION_TIME + '' });
+
     return token;
   }
 
-  setLongTokenOnResponse(token: string, response: Response) {
-    response.cookie('x-long-token', token, {
+  setTokenOnResponse(token: string, response: Response, tokenField: TokenFields) {
+    response.cookie(tokenField, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: LONG_TOKEN_EXPIRATION_TIME,
-    });
-  }
-
-  setShortTokenOnResponse(token: string, response: Response) {
-    response.cookie('x-token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: TOKEN_EXPIRATION_TIME,
+      maxAge: tokenField === TokenFields.LONG ? LONG_TOKEN_EXPIRATION_TIME : TOKEN_EXPIRATION_TIME,
     });
   }
 
@@ -46,19 +46,19 @@ export class TokenService {
       sameSite: 'strict' as const,
     };
 
-    const xTokenExists = 'x-token' in response.req.cookies;
-    const xLongTokenExists = 'x-long-token' in response.req.cookies;
+    const xTokenExists = TokenFields.SHORT in response.req.cookies;
+    const xLongTokenExists = TokenFields.LONG in response.req.cookies;
 
     if (xTokenExists) {
-      response.clearCookie('x-token', cookieOptions);
+      response.clearCookie(TokenFields.SHORT, cookieOptions);
     }
 
     if (xLongTokenExists) {
-      response.clearCookie('x-long-token', cookieOptions);
+      response.clearCookie(TokenFields.LONG, cookieOptions);
     }
   }
 
-  extractTokenFromCookies(request: Request, cookieName: tokenFields) {
+  extractTokenFromCookies(request: Request, cookieName: TokenFields) {
     const token = request.cookies[cookieName] as string | undefined;
     if (!token) {
       throw new UnauthorizedException('There is no token');
@@ -91,12 +91,13 @@ export class TokenService {
     const payload = {
       sub: userForToken.sub,
       role: userForToken.role,
+      businessId: userForToken.businessId,
     };
-    const token = await this.jwtService.signAsync(payload);
-    this.setShortTokenOnResponse(token, response);
+    const token = await this.jwtService.signAsync(payload, { expiresIn: TOKEN_EXPIRATION_TIME + '' });
+    this.setTokenOnResponse(token, response, TokenFields.SHORT);
   }
 
-  async getUserIdFromToken(request: Request, cookieName: tokenFields = 'x-long-token') {
+  async getUserIdFromToken(request: Request, cookieName: TokenFields = TokenFields.LONG) {
     const token = this.extractTokenFromCookies(request, cookieName);
     const tokenObject = await this.verifyToken(token);
     return tokenObject.sub;

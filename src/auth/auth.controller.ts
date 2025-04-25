@@ -5,11 +5,16 @@ import { Response, Request } from 'express';
 import { IsPublic } from 'src/utils/decorators/isPublic.decorator';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ResponseUserDto } from 'src/users/dto/response-user.dro';
+import { SendVerificationDto, VerifyEmailDto } from './dto/email-verification.dto';
+import { EmailVerificationService } from './email-verification.service';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly emailVerificationService: EmailVerificationService
+  ) {}
 
   @Post('login')
   @IsPublic()
@@ -63,5 +68,25 @@ export class AuthController {
   @IsPublic()
   async googleCallbackHandler(@Query() googleOauthQuery: GoogleOauthQueryDto, @Res() res: Response) {
     return this.authService.loginByGoogleOauthCode(googleOauthQuery, res);
+  }
+
+  @Post('register/send-verification')
+  @IsPublic()
+  @ApiOperation({ summary: 'Send email verification code' })
+  @ApiBody({ type: SendVerificationDto })
+  @ApiResponse({ status: 200, description: 'Verification code sent successfully' })
+  @ApiResponse({ status: 400, description: 'Failed to send verification code' })
+  sendVerification(@Body() dto: SendVerificationDto) {
+    return this.emailVerificationService.create(dto.email);
+  }
+
+  @Post('register/verify-email')
+  @IsPublic()
+  @ApiOperation({ summary: 'Verify email with code' })
+  @ApiBody({ type: VerifyEmailDto })
+  @ApiResponse({ status: 200, description: 'Email verified successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired verification code' })
+  verifyEmail(@Body() dto: VerifyEmailDto) {
+    return this.emailVerificationService.verify(dto.email, dto.code);
   }
 }
