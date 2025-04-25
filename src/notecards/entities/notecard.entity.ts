@@ -1,5 +1,11 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
+export enum CardType {
+  SHORT = 'short',
+  EXTENDED = 'extended',
+  NOTE_CARD = 'note_card',
+}
+
 export enum NoteCardType {
   YOUTUBE = 'youtube',
   ARTICLE = 'article',
@@ -15,8 +21,15 @@ export class NoteCard {
   @Column({ type: 'varchar', length: 255, nullable: false })
   title: string;
 
-  @Column({ type: 'varchar', length: 500, nullable: false })
+  @Column({ type: 'varchar', length: 500, nullable: true })
   sourceUrl: string;
+
+  @Column({
+    type: 'enum',
+    enum: CardType,
+    default: 'note_card',
+  })
+  type: CardType;
 
   @Column({
     type: 'enum',
@@ -51,6 +64,12 @@ export class NoteCard {
 
   @Column({ type: 'uuid', nullable: false })
   userId: string;
+
+  @Column({ type: 'boolean', array: true, default: () => 'ARRAY[]::boolean[]' })
+  isIdeaLiked: boolean[];
+
+  @Column({ type: 'boolean', default: false })
+  isLiked: boolean;
 
   @Column({ type: 'boolean', default: true })
   isActive: boolean;

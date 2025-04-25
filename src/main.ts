@@ -32,14 +32,12 @@ async function bootstrap() {
   await waitForEnvVars();
 
   const logger = new Logger('Bootstrap');
-  const app = await NestFactory.create(AppModule);
-
-  const server = app.getHttpServer();
-  const router = server._events.request._router;
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn', 'log', 'debug', 'verbose'], // הוסף את זה כדי לראות רישום מלא
+  });
 
   logger.log('NODE_ENV:', process.env.NODE_ENV);
   logger.log(`Selected log level: ${process.env.LOG_LEVEL}`);
-  app.useLogger(logger);
 
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
@@ -47,7 +45,8 @@ async function bootstrap() {
   app.use(cookieParser());
 
   const config = new DocumentBuilder().setTitle('Thinker API').setDescription('The Thinker API description').setVersion('1.0').addTag('auth').addBearerAuth().build();
-  const document = () => SwaggerModule.createDocument(app, config);
+
+  const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
   app.enableCors({
@@ -55,14 +54,23 @@ async function bootstrap() {
     credentials: true,
   });
 
+  const httpAdapter = app.getHttpAdapter();
+  if (httpAdapter && typeof httpAdapter.use === 'function') {
+    httpAdapter.use((req, res, next) => {
+      if (!req.originalUrl.includes('favicon.ico')) {
+        logger.debug(`Request: ${req.method} ${req.originalUrl}`);
+      }
+      next();
+    });
+  }
+
   await app.listen(3000, '0.0.0.0');
 
-  logger.log('Available routes:');
-  router.stack.forEach((route) => {
-    if (route.route) {
-      logger.log(`${route.route.stack[0].method.toUpperCase()} ${route.route.path}`);
-    }
-  });
+  const serverUrl = await app.getUrl();
+  logger.log(`Application is running on: ${serverUrl}`);
+  logger.log(`Swagger documentation available at: ${serverUrl}/api`);
+
+  logger.log('Routes are logged during application startup in [RoutesResolver] and [RouterExplorer] logs');
 }
 
 bootstrap();
