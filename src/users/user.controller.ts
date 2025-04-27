@@ -14,7 +14,7 @@ export class UserController {
   @ApiOperation({ summary: 'Create User' })
   @ApiBody({ type: CreateUserDto })
   @ApiResponse({ status: 200, description: 'User created successfully', type: ResponseUserDto })
-  @ApiResponse({ status: 401, description: 'Incorrect user or password or businessId' })
+  @ApiResponse({ status: 401, description: 'Incorrect user or password' })
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);

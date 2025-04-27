@@ -21,10 +21,6 @@ export class TokenService {
       role: user.role,
     };
 
-    if (user.businesses && user.businesses.length > 0) {
-      payload.businessId = user.businesses[0].id;
-    } else payload.businessId = null;
-
     const token = await this.jwtService.signAsync(payload, { expiresIn: tokenField === TokenFields.SHORT ? TOKEN_EXPIRATION_TIME + '' : LONG_TOKEN_EXPIRATION_TIME + '' });
 
     return token;
@@ -91,7 +87,6 @@ export class TokenService {
     const payload = {
       sub: userForToken.sub,
       role: userForToken.role,
-      businessId: userForToken.businessId,
     };
     const token = await this.jwtService.signAsync(payload, { expiresIn: TOKEN_EXPIRATION_TIME + '' });
     this.setTokenOnResponse(token, response, TokenFields.SHORT);

@@ -28,13 +28,11 @@ export class AuthService {
       user = await this.authenticateUserByOTP(loginDto);
     }
 
-    const shortToken = await this.tokenService.createTokenByUser(user, TokenFields.SHORT);
-    this.tokenService.setTokenOnResponse(shortToken, res, TokenFields.SHORT);
+    // const shortToken = await this.tokenService.createTokenByUser(user, TokenFields.SHORT);
+    // this.tokenService.setTokenOnResponse(shortToken, res, TokenFields.SHORT);
 
-    if (loginDto.rememberMe) {
-      const longToken = await this.tokenService.createTokenByUser(user, TokenFields.LONG);
-      this.tokenService.setTokenOnResponse(longToken, res, TokenFields.LONG);
-    }
+    // const longToken = await this.tokenService.createTokenByUser(user, TokenFields.LONG);
+    // this.tokenService.setTokenOnResponse(longToken, res, TokenFields.LONG);
 
     return res.status(200).json({ user: new ResponseUserDto(user) });
   }
@@ -66,9 +64,9 @@ export class AuthService {
     if (!user) {
       throw new BadRequestException(`User with email { ${loginDto.email} } not found`);
     }
-    if (!(await user.comparePassword(loginDto.password))) {
-      throw new BadRequestException(`Incorrect password`);
-    }
+    // if (!(await user.comparePassword(loginDto.password))) {
+    //   throw new BadRequestException(`Incorrect password`);
+    // }
 
     return user;
   }

@@ -53,7 +53,7 @@ export class CreateUserDto {
   })
   @IsEnum(UserRole)
   @IsOptional()
-  role?: UserRole = UserRole.USER;
+  role?: UserRole = UserRole.BUSINESS_MANAGER;
 
   @ApiProperty({
     description: 'Indicates if the user has a temporary password',

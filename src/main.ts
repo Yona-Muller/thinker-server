@@ -33,7 +33,7 @@ async function bootstrap() {
 
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn', 'log', 'debug', 'verbose'], // הוסף את זה כדי לראות רישום מלא
+    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
   });
 
   logger.log('NODE_ENV:', process.env.NODE_ENV);

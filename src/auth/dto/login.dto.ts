@@ -9,11 +9,6 @@ export class LoginByPasswordDto {
   @ApiProperty({ example: 'MyPassword1234' })
   @IsString()
   password: string;
-
-  @ApiProperty({ example: true })
-  @IsBoolean()
-  @IsOptional()
-  rememberMe?: boolean;
 }
 
 export class LoginByOTPDto {
@@ -24,11 +19,6 @@ export class LoginByOTPDto {
   @ApiProperty({ example: 123456 })
   @IsNumber()
   code: number;
-
-  @ApiProperty({ example: true })
-  @IsBoolean()
-  @IsOptional()
-  rememberMe?: boolean;
 }
 
 export class GoogleOauthQueryDto {
