@@ -1,80 +1,116 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { NoteCard } from './entities/notecard.entity';
+import { NoteCard, CardType, NoteCardType } from './entities/notecard.entity';
 import { CreateNoteCardDto } from './dto/create-notecerd.dto';
-import { UpdateNoteCardDto } from './dto/update-notecerd.dto';
-import { PaginationDto } from 'src/utils/pagination/paginated.query.param.dto';
+import { YoutubeService } from '../youTube/youtube.service';
+import { AIService } from '../ai/ai.service';
+import { MemoriesService } from '../momories/memory.service';
 
 @Injectable()
-export class NoteCardsService {
-  private readonly logger = new Logger(NoteCardsService.name);
-
+export class NoteCardService {
   constructor(
     @InjectRepository(NoteCard)
-    private readonly noteCardsRepository: Repository<NoteCard>
+    private noteCardRepository: Repository<NoteCard>,
+    private youtubeService: YoutubeService,
+    private aiService: AIService,
+    private memoriesService: MemoriesService
   ) {}
 
-  async findAll(paginationDto: PaginationDto): Promise<any> {
-    const { page = 1, limit = 100 } = paginationDto;
-    const skip = (page - 1) * limit;
-
-    try {
-      const [data, total] = await this.noteCardsRepository.findAndCount({
-        skip,
-        take: limit,
-      });
-      return { data, total, page, limit };
-    } catch (error) {
-      this.logger.error(`Error in findAll: ${error.message}`);
-      throw error;
-    }
+  async create(createNoteCardDto: CreateNoteCardDto): Promise<NoteCard> {
+    const noteCard = this.noteCardRepository.create({
+      ...createNoteCardDto,
+      isIdeaLiked: new Array(createNoteCardDto.keyTakeaways?.length || 0).fill(false),
+    });
+    return await this.noteCardRepository.save(noteCard);
   }
 
-  async findOne(id: string): Promise<NoteCard> {
-    const noteCard = await this.noteCardsRepository.findOne({ where: { id } });
+  async findAll(userId: string): Promise<NoteCard[]> {
+    return this.noteCardRepository.find({
+      where: { userId, isActive: true },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findOneByUserId(id: string, userId: string): Promise<NoteCard> {
+    const noteCard = await this.noteCardRepository.findOne({
+      where: { id, userId, isActive: true },
+    });
+
     if (!noteCard) {
-      throw new NotFoundException('NoteCard not found');
+      throw new NotFoundException(`Note card with ID ${id} not found (in user ${userId})`);
     }
+
     return noteCard;
   }
 
-  async findAllNoteCardsByUserId(userId: string): Promise<NoteCard[]> {
-    const noteCards = await this.noteCardsRepository.find({
-      where: { userId: userId },
+  async findOne(id: string): Promise<NoteCard> {
+    const noteCard = await this.noteCardRepository.findOne({
+      where: { id, isActive: true },
     });
-    return noteCards;
+
+    if (!noteCard) {
+      throw new NotFoundException(`Note card with ID ${id} not found`);
+    }
+
+    return noteCard;
   }
 
-  async create(createNoteCardDto: CreateNoteCardDto): Promise<NoteCard> {
-    try {
-      const newNoteCard = this.noteCardsRepository.create(createNoteCardDto);
-      return await this.noteCardsRepository.save(newNoteCard);
-    } catch (error) {
-      this.logger.error(`Failed to create NoteCard: ${error.message}`);
-      throw error;
-    }
+  async analyzeYoutubeVideo(youtubeUrl: string, userId: string): Promise<NoteCard> {
+    const videoInfo = await this.youtubeService.getVideoInfo(youtubeUrl);
+
+    const aiAnalysis = await this.aiService.analyzeTranscript(videoInfo.transcript, videoInfo.title);
+
+    const noteCard = await this.create({
+      title: videoInfo.title,
+      sourceUrl: youtubeUrl,
+      sourceType: NoteCardType.YOUTUBE,
+      type: CardType.NOTE_CARD,
+      keyTakeaways: aiAnalysis.keyIdeas.map((idea) => `${idea.title}: ${idea.content}`),
+      tags: aiAnalysis.categories,
+      thumbnailUrl: videoInfo.thumbnailUrl,
+      channelName: videoInfo.channelName,
+      channelAvatar: videoInfo.channelAvatar,
+      userId,
+    });
+
+    const memories = aiAnalysis.memories.map((memory) => ({
+      userId,
+      noteCardId: noteCard.id,
+      content: memory.content,
+      tags: memory.tags,
+    }));
+
+    await Promise.all(memories.map((memory) => this.memoriesService.create(memory)));
+
+    return noteCard;
   }
 
-  async update(id: string, updateNoteCardDto: UpdateNoteCardDto): Promise<NoteCard> {
-    try {
-      const noteCard = await this.findOne(id);
-      const updatedNoteCard = this.noteCardsRepository.merge(noteCard, updateNoteCardDto);
-      return await this.noteCardsRepository.save(updatedNoteCard);
-    } catch (error) {
-      this.logger.error(`Failed to update NoteCard with id ${id}: ${error.message}`);
-      throw error;
-    }
+  async toggleLike(id: string, userId: string): Promise<NoteCard> {
+    const noteCard = await this.findOneByUserId(id, userId);
+    noteCard.isLiked = !noteCard.isLiked;
+    return this.noteCardRepository.save(noteCard);
   }
 
-  async delete(id: string): Promise<{ success: boolean; message: string }> {
-    try {
-      const noteCard = await this.findOne(id);
-      await this.noteCardsRepository.remove(noteCard);
-      return { success: true, message: 'NoteCard deleted successfully' };
-    } catch (error) {
-      this.logger.error(`Failed to delete NoteCard with id ${id}: ${error.message}`);
-      throw error;
+  async toggleIdeaLike(id: string, userId: string, ideaIndex: number): Promise<NoteCard> {
+    const noteCard = await this.findOneByUserId(id, userId);
+
+    if (ideaIndex < 0 || ideaIndex >= noteCard.keyTakeaways.length) {
+      throw new NotFoundException(`Idea index ${ideaIndex} out of bounds`);
     }
+
+    if (!noteCard.isIdeaLiked || noteCard.isIdeaLiked.length !== noteCard.keyTakeaways.length) {
+      noteCard.isIdeaLiked = new Array(noteCard.keyTakeaways.length).fill(false);
+    }
+
+    noteCard.isIdeaLiked[ideaIndex] = !noteCard.isIdeaLiked[ideaIndex];
+
+    return this.noteCardRepository.save(noteCard);
+  }
+
+  async remove(id: string, userId: string): Promise<void> {
+    const noteCard = await this.findOneByUserId(id, userId);
+    noteCard.isActive = false;
+    await this.noteCardRepository.save(noteCard);
   }
 }

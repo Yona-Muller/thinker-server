@@ -14,11 +14,11 @@ async function getConfigDB(configService: ConfigService): Promise<TypeOrmModuleO
 
   const typeOrmConfig: TypeOrmModuleOptions = {
     type: 'postgres',
-    host: configService.get('DB_HOST'),
-    port: configService.get('DB_PORT'),
-    username: configService.get('DB_USERNAME'),
-    password: configService.get('DB_PASSWORD'),
-    database: configService.get('DB_NAME'),
+    host: 'thinker.cp0swoc6k3dm.us-east-2.rds.amazonaws.com',
+    port: 5432,
+    username: 'postgres',
+    password: 'Yona-Shloimy',
+    database: 'thinker',
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
     migrations: [path.join(__dirname, '../database/migration/*.ts')],
     synchronize: false,
