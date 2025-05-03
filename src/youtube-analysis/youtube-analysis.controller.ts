@@ -1,10 +1,11 @@
 import { Controller, Post, Body, Get, Param, Put, Delete, Query } from '@nestjs/common';
 import { NoteCardService } from '../notecards/noteCards.service';
-import { MemoriesService } from '../momories/memory.service';
+import { MemoriesService } from '../memories/memory.service';
 import { AnalyzeYoutubeDto } from '../notecards/dto/analyze-youtube.dto';
 import { NoteCard } from '../notecards/entities/notecard.entity';
-import { Memory } from '../momories/entitys/memory.entity';
+import { Memory } from '../memories/entitys/memory.entity';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { IsPublic } from 'src/utils/decorators/isPublic.decorator';
 
 @ApiTags('youtube-analysis')
 @ApiBearerAuth()
@@ -23,6 +24,7 @@ export class YoutubeAnalysisController {
   }
 
   @Get('note-cards/:userId')
+  @IsPublic()
   @ApiOperation({ summary: 'Get all note cards for the user' })
   @ApiResponse({ status: 200, type: [NoteCard] })
   async getNoteCards(@Param('userId') userId: string): Promise<NoteCard[]> {

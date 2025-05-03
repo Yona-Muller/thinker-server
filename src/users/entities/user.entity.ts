@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BeforeInsert, BeforeUpdate, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BeforeInsert, BeforeUpdate, ManyToMany, JoinTable, OneToMany } from 'typeorm';
 import { NoteCard } from 'src/notecards/entities/notecard.entity';
 import * as bcrypt from 'bcrypt';
 
@@ -67,12 +67,7 @@ export class User {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @ManyToMany(() => NoteCard)
-  @JoinTable({
-    name: 'user_noteCards',
-    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'noteCard_id', referencedColumnName: 'id' },
-  })
+  @OneToMany(() => NoteCard, (noteCard) => noteCard.user)
   noteCards: NoteCard[];
 
   @BeforeInsert()

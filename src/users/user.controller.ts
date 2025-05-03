@@ -5,7 +5,6 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ResponseUserDto } from './dto/response-user.dro';
-import { IsPublic } from 'src/utils/decorators/isPublic.decorator';
 
 @ApiTags('Users')
 @Controller('users')
@@ -25,7 +24,6 @@ export class UserController {
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
   @ApiResponse({ status: 200, description: 'Users successfully retrieved', type: [ResponseUserDto] })
-  @IsPublic()
   @Get()
   async findAll(@Query() paginationDto: PaginationDto) {
     return this.userService.findAll(paginationDto);
@@ -35,7 +33,6 @@ export class UserController {
   @ApiParam({ name: 'id', required: true, description: 'ID of the user' })
   @ApiResponse({ status: 200, description: 'User successfully retrieved', type: ResponseUserDto })
   @ApiResponse({ status: 404, description: 'User not found' })
-  @IsPublic()
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.userService.findOne(id);

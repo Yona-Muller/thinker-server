@@ -5,7 +5,7 @@ import { NoteCard, CardType, NoteCardType } from './entities/notecard.entity';
 import { CreateNoteCardDto } from './dto/create-notecerd.dto';
 import { YoutubeService } from '../youTube/youtube.service';
 import { AIService } from '../ai/ai.service';
-import { MemoriesService } from '../momories/memory.service';
+import { MemoriesService } from '../memories/memory.service';
 
 @Injectable()
 export class NoteCardService {
