@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NoteCard, CardType, NoteCardType } from './entities/notecard.entity';
@@ -61,6 +61,8 @@ export class NoteCardService {
 
     const aiAnalysis = await this.aiService.analyzeTranscript(videoInfo.transcript, videoInfo.title);
 
+    Logger.log('hi');
+
     const noteCard = await this.create({
       title: videoInfo.title,
       sourceUrl: youtubeUrl,
@@ -109,8 +111,6 @@ export class NoteCardService {
   }
 
   async remove(id: string, userId: string): Promise<void> {
-    const noteCard = await this.findOneByUserId(id, userId);
-    noteCard.isActive = false;
-    await this.noteCardRepository.save(noteCard);
+    await this.noteCardRepository.delete({ id, userId });
   }
 }

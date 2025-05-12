@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 import * as ytdl from 'ytdl-core';
 import { YoutubeTranscript } from 'youtube-transcript';
+import axios from 'axios';
 
 interface VideoInfo {
   title: string;
@@ -21,9 +22,6 @@ export class YoutubeService {
     private readonly configService: ConfigService
   ) {}
 
-  /**
-   * Extract YouTube video ID from URL
-   */
   extractVideoId(url: string): string {
     try {
       const videoId = ytdl.getVideoID(url);
@@ -33,38 +31,38 @@ export class YoutubeService {
     }
   }
 
-  /**
-   * Get detailed information about a YouTube video
-   */
   async getVideoInfo(url: string): Promise<VideoInfo> {
     try {
       const videoId = this.extractVideoId(url);
+      const apiKey = 'AIzaSyBkXJ0uOI81nnzpjiMzuacPHKwpGVGuf9k';
 
-      // Get video details using ytdl-core
-      const videoInfo = await ytdl.getInfo(videoId);
+      const apiUrl = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=snippet&key=${apiKey}`;
+      const response = await axios.get(apiUrl);
 
-      // Extract transcript using youtube-transcript package
+      const videoData = response.data.items[0];
+      if (!videoData) {
+        throw new Error('Video not found or API limit exceeded');
+      }
+
+      const { title, channelTitle, thumbnails } = videoData.snippet;
+      const thumbnailUrl = thumbnails?.high?.url || thumbnails?.default?.url || '';
+
+      const channelApiUrl = `https://www.googleapis.com/youtube/v3/channels?part=snippet&id=${videoData.snippet.channelId}&key=${apiKey}`;
+      const channelResponse = await axios.get(channelApiUrl);
+      const channelAvatar = channelResponse.data.items[0]?.snippet?.thumbnails?.default?.url || '';
+
       const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId);
       const transcript = transcriptArray.map((item) => item.text).join(' ');
 
-      // Extract video metadata
-      const title = videoInfo.videoDetails.title;
-      const channelName = videoInfo.videoDetails.author.name;
-      const channelAvatar = videoInfo.videoDetails.author.thumbnails?.[0]?.url || '';
-      const thumbnailUrl = videoInfo.videoDetails.thumbnails[0]?.url || '';
-
       return {
         title,
-        channelName,
+        channelName: channelTitle,
         channelAvatar,
         thumbnailUrl,
         transcript,
         videoId,
       };
     } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
       throw new HttpException(`Failed to fetch video information: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }

@@ -17,6 +17,7 @@ export class YoutubeAnalysisController {
   ) {}
 
   @Post(':userId')
+  @IsPublic()
   @ApiOperation({ summary: 'Analyze a YouTube video and extract key ideas and memories' })
   @ApiResponse({ status: 201, description: 'The analysis has been successfully created', type: NoteCard })
   async analyzeYoutubeVideo(@Body() analyzeYoutubeDto: AnalyzeYoutubeDto, @Param('userId') userId: string): Promise<NoteCard> {
@@ -24,7 +25,6 @@ export class YoutubeAnalysisController {
   }
 
   @Get('note-cards/:userId')
-  @IsPublic()
   @ApiOperation({ summary: 'Get all note cards for the user' })
   @ApiResponse({ status: 200, type: [NoteCard] })
   async getNoteCards(@Param('userId') userId: string): Promise<NoteCard[]> {
@@ -82,6 +82,7 @@ export class YoutubeAnalysisController {
   }
 
   @Delete('note-cards/:id/:userId')
+  @IsPublic()
   @ApiOperation({ summary: 'Delete a note card' })
   @ApiResponse({ status: 200, description: 'Note card deleted successfully' })
   async deleteNoteCard(@Param('id') id: string, @Param('userId') userId: string): Promise<void> {

@@ -76,6 +76,6 @@ export class NoteCard {
   isActive: boolean;
 
   @ManyToOne(() => User, (user) => user.noteCards, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' }) // חובה בגלל שם עמודה שונה
+  @JoinColumn({ name: 'userId' })
   user: User;
 }

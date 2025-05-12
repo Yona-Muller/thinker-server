@@ -18,7 +18,8 @@ export class CreateNoteCardDto {
   })
   @IsString()
   @IsUrl()
-  sourceUrl: string;
+  @IsOptional()
+  sourceUrl?: string;
 
   @IsEnum(CardType)
   @IsOptional()

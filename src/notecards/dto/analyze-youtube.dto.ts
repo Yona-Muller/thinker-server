@@ -4,8 +4,4 @@ export class AnalyzeYoutubeDto {
   @IsUrl()
   @IsNotEmpty()
   youtubeUrl: string;
-
-  @IsUUID()
-  @IsNotEmpty()
-  userId: string;
 }
