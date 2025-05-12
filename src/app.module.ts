@@ -8,6 +8,11 @@ import { DatabaseModule } from './database/database.module';
 import { UsersModule } from './users/user.module';
 import { JwtModule } from '@nestjs/jwt';
 import { TOKEN_EXPIRATION_TIME } from './auth/constants';
+import { NoteCardModule } from './notecards/noteCards.module';
+import { MemoriesModule } from './memories/memory.module';
+import { YoutubeModule } from './youTube/youtube.module';
+import { YoutubeAnalysisModule } from './youtube-analysis/youtube-analysis.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -22,6 +27,10 @@ import { TOKEN_EXPIRATION_TIME } from './auth/constants';
     DatabaseModule,
     UsersModule,
     AuthModule,
+    NoteCardModule,
+    MemoriesModule,
+    YoutubeModule,
+    YoutubeAnalysisModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],

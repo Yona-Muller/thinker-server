@@ -6,7 +6,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { ResponseUserDto } from './dto/response-user.dro';
 import { PaginationDto } from 'src/utils/pagination/paginated.query.param.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { NoteCardsService } from 'src/notecards/noteCards.service';
+import { NoteCardService } from 'src/notecards/noteCards.service';
 import { SearchUserDto } from './dto/search-user.dto';
 
 @Injectable()
@@ -15,7 +15,7 @@ export class UserService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private dataSource: DataSource,
-    private noteCardsService: NoteCardsService
+    private noteCardsService: NoteCardService
   ) {}
 
   async create(createUserDto: CreateUserDto) {

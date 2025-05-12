@@ -1,8 +1,7 @@
-import { IsString, IsOptional, IsEnum, IsArray, IsUrl, IsUUID } from 'class-validator';
+import { IsString, IsNotEmpty, IsUrl, IsArray, IsEnum, IsOptional, IsUUID } from 'class-validator';
 import { ApiProperty, ApiExtraModels } from '@nestjs/swagger';
-import { NoteCardType } from '../entities/notecard.entity';
+import { CardType, NoteCardType } from '../entities/notecard.entity';
 
-@ApiExtraModels()
 export class CreateNoteCardDto {
   @ApiProperty({
     description: 'The title of the note card.',
@@ -19,16 +18,16 @@ export class CreateNoteCardDto {
   })
   @IsString()
   @IsUrl()
-  sourceUrl: string;
+  @IsOptional()
+  sourceUrl?: string;
 
-  @ApiProperty({
-    description: 'The type of source.',
-    example: 'youtube',
-    enum: NoteCardType,
-    required: true,
-  })
+  @IsEnum(CardType)
+  @IsOptional()
+  type?: CardType;
+
   @IsEnum(NoteCardType)
-  sourceType: NoteCardType;
+  @IsOptional()
+  sourceType?: NoteCardType;
 
   @ApiProperty({
     description: 'Key takeaways from the content.',
@@ -95,11 +94,6 @@ export class CreateNoteCardDto {
     required: true,
   })
   @IsUUID()
+  @IsNotEmpty()
   userId: string;
-
-  @ApiProperty({
-    description: 'Indicates whether the note card is active.',
-    example: true,
-  })
-  isActive: boolean;
 }

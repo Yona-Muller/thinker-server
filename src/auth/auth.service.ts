@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, UnauthorizedException } from '@nestjs/common';
 import { UserService } from 'src/users/user.service';
 import { GoogleOauthQueryDto, LoginByOTPDto, LoginByPasswordDto } from './dto/login.dto';
 import { Response, Request } from 'express';
@@ -28,15 +28,15 @@ export class AuthService {
       user = await this.authenticateUserByOTP(loginDto);
     }
 
-    const shortToken = await this.tokenService.createTokenByUser(user);
-    this.tokenService.setShortTokenOnResponse(shortToken, res);
+    // const shortToken = await this.tokenService.createTokenByUser(user);
+    // this.tokenService.setShortTokenOnResponse(shortToken, res);
 
-    if (loginDto.rememberMe) {
-      const longToken = await this.tokenService.createTokenByUser(user);
-      this.tokenService.setLongTokenOnResponse(longToken, res);
-    }
+    // if (loginDto.rememberMe) {
+    //   const longToken = await this.tokenService.createTokenByUser(user);
+    //   this.tokenService.setLongTokenOnResponse(longToken, res);
+    // }
 
-    return res.status(200).json({ user: new ResponseUserDto(user) });
+    return res.status(200).json({ user: user });
   }
 
   async logout(res: Response) {
